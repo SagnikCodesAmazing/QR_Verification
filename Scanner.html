@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Event Check-in</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #0b0d12;
+      color: #fff;
+      font-family: Arial, sans-serif
+    }
+
+    .wrap {
+      max-width: 520px;
+      margin: auto;
+      padding: 20px
+    }
+
+    .card {
+      background: #151922;
+      border: 1px solid #2a3140;
+      border-radius: 20px;
+      padding: 18px
+    }
+
+    #reader {
+      border-radius: 14px;
+      overflow: hidden
+    }
+
+    #result {
+      margin-top: 15px;
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 700;
+      background: #202633
+    }
+
+    input,
+    button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      margin-top: 10px;
+      border-radius: 12px;
+      font-size: 16px
+    }
+
+    input {
+      background: #0f131b;
+      color: white;
+      border: 1px solid #394255
+    }
+
+    button {
+      border: 0;
+      font-weight: 700;
+      cursor: pointer
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Event Check-in</h1>
+      <p>Scan a QR ticket or enter the ticket ID manually.</p>
+      <div id="reader"></div>
+      <div id="result">Ready to scan</div>
+      <input id="manual" placeholder="EVT-..."><button onclick="check(document.getElementById('manual').value)">Check
+        ticket</button>
+    </div>
+  </div>
+  <script>
+    const API_URL = "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE";
+    let busy = false, last = "", lastAt = 0;
+    function show(t, bg) { const e = document.getElementById("result"); e.textContent = t; e.style.background = bg }
+    async function check(ticket) {
+      ticket = String(ticket || "").trim(); const now = Date.now();
+      if (!ticket || busy || (ticket === last && now - lastAt < 3000)) return;
+      busy = true; last = ticket; lastAt = now; show("Checking…", "#202633");
+      try {
+        const r = await fetch(API_URL + "?ticket=" + encodeURIComponent(ticket));
+        const x = await r.json();
+        if (x.state === "VALID") show("✅ " + x.message, "#123b28");
+        else if (x.state === "USED") show("⚠️ " + x.message, "#4a3210");
+        else show("❌ " + x.message, "#4b171c");
+      } catch (e) { show("❌ Network/API error", "#4b171c") }
+      finally { busy = false }
+    }
+    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 240, height: 240 }, rememberLastUsedCamera: true }, false);
+    scanner.render(text => check(text), () => { });
+  </script>
+</body>
+
+</html>
