@@ -5,7 +5,6 @@
   <meta charset="utf-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
       --bg: #0B0E14;
@@ -22,7 +21,7 @@
       --warning-dim: #2B2110;
       --danger: #FB7185;
       --danger-dim: #2B131C;
-      --radius-lg: 22px;
+      --radius-lg: 20px;
       --radius-md: 14px;
       --font-display: 'Space Grotesk', sans-serif;
       --font-body: 'Inter', sans-serif;
@@ -31,549 +30,489 @@
     * { box-sizing: border-box; }
 
     html, body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background: var(--bg);
       color: var(--text);
       font-family: var(--font-body);
-      -webkit-tap-highlight-color: transparent;
-      overscroll-behavior: none;
     }
 
     body {
       min-height: 100vh;
       background:
-        radial-gradient(circle at 15% -10%, rgba(99,102,241,0.20), transparent 45%),
-        radial-gradient(circle at 100% 0%, rgba(139,92,246,0.14), transparent 40%),
+        radial-gradient(circle at 10% -10%, rgba(99,102,241,0.18), transparent 40%),
+        radial-gradient(circle at 100% 0%, rgba(139,92,246,0.12), transparent 35%),
         var(--bg);
-      display: flex;
-      flex-direction: column;
+    }
+
+    .api-warning {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border-bottom: 1px solid rgba(251,113,133,0.35);
+      font-size: 12.5px;
+      line-height: 1.5;
+      padding: 10px 16px;
+      text-align: center;
+    }
+    .api-warning[hidden] { display: none; }
+    .api-warning code {
+      background: rgba(255,255,255,0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11.5px;
     }
 
     .topbar {
-      padding: 18px 20px 14px;
-      background: rgba(19,23,34,0.7);
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(19,23,34,0.72);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      text-align: center;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .topbar h1 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      margin: 0;
+      font-weight: 700;
+    }
+    .topbar .eyebrow {
+      display: block;
+      font-size: 10.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 3px;
     }
 
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      color: var(--success);
-      background: var(--success-dim);
-      border: 1px solid rgba(52,211,153,0.35);
-      padding: 4px 10px;
-      border-radius: 999px;
-      margin-bottom: 10px;
+    .refresh-group { display: flex; align-items: center; gap: 10px; }
+    .live-dot-wrap {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-dim);
     }
-    .live-pill .dot {
-      width: 6px; height: 6px; border-radius: 50%;
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 0 0 rgba(52,211,153,0.6);
       animation: pulseDot 1.8s infinite;
     }
     @keyframes pulseDot {
       0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.55); }
-      70% { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
+      70% { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
       100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
     }
 
-    .event-name {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 20px;
-      margin: 0;
-      background: linear-gradient(135deg, #fff, #C7C9F5);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .event-sub {
-      margin: 4px 0 0;
-      font-size: 12.5px;
-      color: var(--text-dim);
-      letter-spacing: 0.3px;
-    }
-
-    main {
-      flex: 1;
-      padding: 20px 16px 32px;
-      max-width: 480px;
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    .scanner-card {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      aspect-ratio: 3 / 4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #qr-reader {
-      width: 100% !important;
-      height: 100% !important;
-    }
-    #qr-reader video {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-    }
-    /* hide the library's default chrome; we render our own UI */
-    #qr-reader img, #qr-reader__dashboard_section_csr { display: none !important; }
-    #qr-reader__scan_region { border: none !important; }
-
-    .reticle {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 5;
-    }
-    .reticle-box { position: relative; width: 62%; aspect-ratio: 1/1; }
-    .corner {
-      position: absolute;
-      width: 30px; height: 30px;
-      border: 3px solid var(--accent-2);
-      opacity: 0.9;
-      animation: cornerPulse 2.4s ease-in-out infinite;
-    }
-    .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 8px 0 0 0; }
-    .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
-    .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 8px; }
-    .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 8px 0; }
-    @keyframes cornerPulse {
-      0%, 100% { opacity: 0.55; }
-      50% { opacity: 1; }
-    }
-
-    .scan-hint {
-      position: absolute;
-      bottom: 16px; left: 0; right: 0;
-      text-align: center;
-      font-size: 13px;
-      color: rgba(255,255,255,0.85);
-      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-      z-index: 6;
-    }
-
-    .camera-error {
-      position: absolute;
-      inset: 0;
-      background: var(--surface);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 28px;
-      z-index: 8;
-    }
-    .camera-error[hidden] { display: none; }
-    .camera-error .icon { font-size: 32px; margin-bottom: 10px; }
-    .camera-error h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 17px; }
-    .camera-error p { margin: 0 0 18px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
-
     button { font-family: var(--font-body); cursor: pointer; }
-
-    .btn {
-      border: none;
-      border-radius: 12px;
-      padding: 13px 20px;
-      font-size: 14.5px;
-      font-weight: 600;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-      color: #fff;
-    }
-    .btn-ghost {
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-block { width: 100%; }
-
-    .manual-toggle {
-      display: block;
-      width: 100%;
-      margin-top: 14px;
-      background: transparent;
-      border: 1px dashed var(--border);
-      color: var(--text-dim);
-      border-radius: var(--radius-md);
-      padding: 13px;
-      font-size: 13.5px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-
-    .manual-panel {
-      margin-top: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      display: flex;
-      gap: 8px;
-    }
-    .manual-panel[hidden] { display: none; }
-    .manual-panel input {
-      flex: 1;
+    .btn-refresh {
       background: var(--surface-2);
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 15px;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.5px;
-      min-width: 0;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 7px;
     }
-    .manual-panel input:focus { outline: 2px solid var(--accent-2); outline-offset: 1px; }
-
-    /* --- loading overlay --- */
-    .loading-overlay {
-      position: fixed; inset: 0;
-      background: rgba(11,14,20,0.72);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 16px;
-      z-index: 50;
-    }
-    .loading-overlay[hidden] { display: none; }
-    .spinner {
-      width: 46px; height: 46px;
-      border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.15);
-      border-top-color: var(--accent-2);
-      animation: spin 0.8s linear infinite;
-    }
+    .btn-refresh .spin-icon { display: inline-block; transition: transform 0.4s ease; }
+    .btn-refresh.spinning .spin-icon { animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-overlay p { margin: 0; font-size: 14px; color: var(--text-dim); }
 
-    /* --- result overlay: the big, unmistakable feedback moment --- */
-    .result-overlay {
-      position: fixed; inset: 0;
-      z-index: 60;
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 16px 14px;
+    }
+    .stat-label {
+      margin: 0 0 8px;
+      font-size: 11.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.4px;
+    }
+    .stat-value {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .stat-card.registered .stat-value { color: var(--accent-2); }
+    .stat-card.checkedin .stat-value { color: var(--success); }
+    .stat-card.waitlist .stat-value { color: var(--warning); }
+    .stat-card.duplicate .stat-value { color: var(--danger); }
+
+    /* --- signature element: capacity gauge --- */
+    .capacity-card {
+      background: rgba(19,23,34,0.7);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 22px 24px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.22s ease;
+      gap: 22px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
     }
-    .result-overlay.visible { opacity: 1; pointer-events: auto; }
-
-    .result-overlay[data-state="success"] { background: radial-gradient(circle at 50% 30%, rgba(52,211,153,0.35), rgba(11,14,20,0.94)); }
-    .result-overlay[data-state="warning"] { background: radial-gradient(circle at 50% 30%, rgba(245,185,59,0.32), rgba(11,14,20,0.94)); }
-    .result-overlay[data-state="danger"]  { background: radial-gradient(circle at 50% 30%, rgba(251,113,133,0.32), rgba(11,14,20,0.94)); }
-    .result-overlay[data-state="neutral"] { background: rgba(11,14,20,0.94); }
-
-    .result-card {
-      width: 100%;
-      max-width: 380px;
-      background: rgba(19,23,34,0.75);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 26px;
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      padding: 36px 26px 28px;
-      text-align: center;
-      transform: scale(0.92) translateY(10px);
-      transition: transform 0.28s cubic-bezier(.2,.9,.3,1.2);
+    .gauge-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+    .gauge-wrap svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+    .gauge-track { fill: none; stroke: var(--surface-2); stroke-width: 10; }
+    .gauge-fill {
+      fill: none; stroke: url(#gaugeGradient); stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.6s cubic-bezier(.2,.8,.3,1);
     }
-    .result-overlay.visible .result-card { transform: scale(1) translateY(0); }
-
-    .result-icon {
-      width: 76px; height: 76px;
-      margin: 0 auto 18px;
-      border-radius: 50%;
+    .gauge-pct {
+      position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-    }
-    .result-overlay[data-state="success"] .result-icon { background: var(--success-dim); color: var(--success); }
-    .result-overlay[data-state="warning"] .result-icon { background: var(--warning-dim); color: var(--warning); }
-    .result-overlay[data-state="danger"] .result-icon  { background: var(--danger-dim); color: var(--danger); }
-    .result-overlay[data-state="neutral"] .result-icon { background: var(--surface-2); color: var(--text-dim); }
-    .result-icon svg { width: 38px; height: 38px; }
-
-    .result-title {
       font-family: var(--font-display);
-      font-size: 24px;
-      font-weight: 700;
-      margin: 0 0 6px;
+      font-size: 22px; font-weight: 700;
     }
-    .result-name {
-      font-size: 17px;
-      font-weight: 600;
+    .capacity-info { flex: 1; min-width: 180px; }
+    .capacity-info h3 {
       margin: 0 0 4px;
-      color: var(--text);
-      min-height: 22px;
+      font-family: var(--font-display);
+      font-size: 16px;
     }
-    .result-meta {
+    .capacity-info p {
+      margin: 0;
       font-size: 13px;
       color: var(--text-dim);
-      margin: 0 0 22px;
+      line-height: 1.5;
+    }
+    .capacity-info .fill-count {
+      color: var(--text);
+      font-weight: 600;
     }
 
-    .result-dismiss {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      font-size: 15px;
-      font-weight: 700;
-      background: rgba(255,255,255,0.1);
+    .table-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    #searchInput {
+      flex: 1;
+      min-width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+    }
+    #searchInput:focus { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .chip.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
       color: #fff;
+      border-color: transparent;
     }
-    .result-overlay[data-state="success"] .result-dismiss { background: linear-gradient(135deg, var(--success), #10B981); color: #06231A; }
-    .result-overlay[data-state="warning"] .result-dismiss { background: linear-gradient(135deg, var(--warning), #F59E0B); color: #2B2110; }
-    .result-overlay[data-state="danger"] .result-dismiss  { background: linear-gradient(135deg, var(--danger), #F43F5E); color: #2B0E14; }
 
-    @media (prefers-reduced-motion: reduce) {
-      .corner, .live-pill .dot, .spinner { animation: none !important; }
-      .result-card, .result-overlay { transition: none !important; }
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 13px 16px;
+      font-size: 13.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    td.mono { font-family: 'Courier New', monospace; letter-spacing: 0.3px; color: var(--text-dim); }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .status-registered { background: rgba(99,102,241,0.16); color: #A5A8F5; }
+    .status-checkedin { background: var(--success-dim); color: var(--success); }
+    .status-waitlist { background: var(--warning-dim); color: var(--warning); }
+    .status-duplicate { background: var(--danger-dim); color: var(--danger); }
+    .status-unknown { background: var(--surface-2); color: var(--text-dim); }
+
+    #emptyState {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 13.5px;
+      padding: 40px 20px;
+    }
+    #emptyState[hidden] { display: none; }
+
+    .table-scroll { overflow-x: auto; }
+
+    @media (max-width: 640px) {
+      .capacity-card { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
 <body>
 
+  <div class="api-warning" id="apiWarning" hidden>
+    ⚠ Set <code>API_URL</code> at the top of the script in Admin.html to your deployed
+    Apps Script Web App URL (ending in <code>/exec</code>), then reload this page.
+  </div>
+
   <header class="topbar">
-    <div class="live-pill"><span class="dot"></span>LIVE</div>
-    <h1 class="event-name"><?= eventName ?></h1>
-    <p class="event-sub">Event Check-In</p>
+    <div>
+      <span class="eyebrow">Admin Dashboard</span>
+      <h1 id="eventName">Event Dashboard</h1>
+    </div>
+    <div class="refresh-group">
+      <span class="live-dot-wrap"><span class="live-dot"></span>Auto-refresh on</span>
+      <button class="btn-refresh" id="refreshBtn"><span class="spin-icon">⟳</span> Refresh</button>
+    </div>
   </header>
 
   <main>
-    <div class="scanner-card" id="scannerCard">
-      <div id="qr-reader"></div>
-      <div class="reticle"><div class="reticle-box">
-        <span class="corner tl"></span><span class="corner tr"></span>
-        <span class="corner bl"></span><span class="corner br"></span>
-      </div></div>
-      <p class="scan-hint">Align the QR code within the frame</p>
+    <section class="stats-grid">
+      <div class="stat-card"><p class="stat-label">Total Responses</p><p class="stat-value" id="statTotal">–</p></div>
+      <div class="stat-card registered"><p class="stat-label">Registered</p><p class="stat-value" id="statRegistered">–</p></div>
+      <div class="stat-card checkedin"><p class="stat-label">Checked In</p><p class="stat-value" id="statCheckedIn">–</p></div>
+      <div class="stat-card"><p class="stat-label">Remaining Capacity</p><p class="stat-value" id="statRemaining">–</p></div>
+      <div class="stat-card waitlist"><p class="stat-label">Waitlisted</p><p class="stat-value" id="statWaitlist">–</p></div>
+      <div class="stat-card duplicate"><p class="stat-label">Duplicates</p><p class="stat-value" id="statDuplicate">–</p></div>
+    </section>
 
-      <div class="camera-error" id="cameraError" hidden>
-        <div class="icon">📷</div>
-        <h3>Camera unavailable</h3>
-        <p id="cameraErrorDetail">Allow camera access, or use manual entry below.</p>
-        <button class="btn btn-primary" id="retryCamera">Try camera again</button>
+    <section class="capacity-card">
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366F1" />
+              <stop offset="100%" stop-color="#34D399" />
+            </linearGradient>
+          </defs>
+          <circle class="gauge-track" cx="60" cy="60" r="50" />
+          <circle class="gauge-fill" id="gaugeCircle" cx="60" cy="60" r="50" />
+        </svg>
+        <div class="gauge-pct" id="capacityPct">0%</div>
       </div>
-    </div>
+      <div class="capacity-info">
+        <h3>Attendance</h3>
+        <p>Checked in ÷ confirmed registrations. <span class="fill-count" id="capacityFillText">– / – spots filled</span></p>
+      </div>
+    </section>
 
-    <button class="manual-toggle" id="manualToggle">⌨ Enter ticket ID manually</button>
-    <div class="manual-panel" id="manualPanel" hidden>
-      <input id="manualInput" placeholder="EVT-XXXXXXXXXXXX" autocapitalize="characters" autocomplete="off" spellcheck="false">
-      <button class="btn btn-primary" id="manualSubmit">Check In</button>
-    </div>
+    <section class="table-controls">
+      <input id="searchInput" type="text" placeholder="Search name, email, or ticket ID…">
+      <div class="filter-chips">
+        <button class="chip active" data-filter="ALL">All</button>
+        <button class="chip" data-filter="REGISTERED">Registered</button>
+        <button class="chip" data-filter="CHECKED IN">Checked In</button>
+        <button class="chip" data-filter="WAITLIST">Waitlist</button>
+        <button class="chip" data-filter="DUPLICATE">Duplicate</button>
+      </div>
+    </section>
+
+    <section class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Ticket ID</th>
+              <th>Status</th>
+              <th>Check-In Time</th>
+            </tr>
+          </thead>
+          <tbody id="attendeeBody"></tbody>
+        </table>
+      </div>
+      <p id="emptyState" hidden>No attendees match your search or filter.</p>
+    </section>
   </main>
 
-  <div class="loading-overlay" id="loadingOverlay" hidden>
-    <div class="spinner"></div>
-    <p>Verifying ticket…</p>
-  </div>
-
-  <div class="result-overlay" id="resultOverlay">
-    <div class="result-card">
-      <div class="result-icon" id="resultIcon"></div>
-      <h2 class="result-title" id="resultTitle"></h2>
-      <p class="result-name" id="resultName"></p>
-      <p class="result-meta" id="resultMeta"></p>
-      <button class="result-dismiss" id="resultDismiss">Scan Next</button>
-    </div>
-  </div>
-
   <script>
-    const ICONS = {
-      success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
-      warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
-      danger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
-      neutral: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
-    };
+    // ------------------------------------------------------------------
+    // Paste your deployed Apps Script Web App URL here (Deploy > Manage
+    // deployments > copy the URL ending in /exec). This is the ONLY line
+    // you need to edit - it works whether this file is hosted on GitHub
+    // Pages, opened as a local file, or served from the Apps Script
+    // deployment itself.
+    // ------------------------------------------------------------------
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw5T1Fe5DgDS1IGAj7S8RuodVZT7RLEwQK8M-tHn7UasMmsyElE6XDedloCnxPn_ryeKw/exec';
 
-    let html5QrCode = null;
-    let isBusy = false;
-    let lastId = '';
-    let lastTime = 0;
-    const COOLDOWN_MS = 4000;
-    const RESULT_DISPLAY_MS = 2400;
-    let dismissTimer = null;
+    const API_CONFIGURED = API_URL.indexOf('PASTE_') !== 0;
+
+    const GAUGE_CIRCUMFERENCE = 2 * Math.PI * 50;
+    let allAttendees = [];
+    let currentFilter = 'ALL';
+    let currentSearch = '';
+    let refreshTimer = null;
 
     document.addEventListener('DOMContentLoaded', function () {
-      startScanner();
+      document.getElementById('gaugeCircle').style.strokeDasharray = GAUGE_CIRCUMFERENCE;
+      document.getElementById('gaugeCircle').style.strokeDashoffset = GAUGE_CIRCUMFERENCE;
 
-      document.getElementById('manualToggle').addEventListener('click', toggleManual);
-      document.getElementById('manualSubmit').addEventListener('click', submitManual);
-      document.getElementById('manualInput').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') submitManual();
+      if (!API_CONFIGURED) {
+        document.getElementById('apiWarning').hidden = false;
+      }
+
+      loadConfig();
+      loadData();
+      document.getElementById('refreshBtn').addEventListener('click', loadData);
+      document.getElementById('searchInput').addEventListener('input', function (e) {
+        currentSearch = e.target.value.toLowerCase();
+        render();
       });
-      document.getElementById('resultDismiss').addEventListener('click', dismissResult);
-      document.getElementById('resultOverlay').addEventListener('click', function (e) {
-        if (e.target.id === 'resultOverlay') dismissResult();
+      document.querySelectorAll('.chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('active'); });
+          chip.classList.add('active');
+          currentFilter = chip.dataset.filter;
+          render();
+        });
       });
-      document.getElementById('retryCamera').addEventListener('click', startScanner);
+
+      refreshTimer = setInterval(loadData, 20000);
     });
 
-    function startScanner() {
-      hideCameraError();
-      if (typeof Html5Qrcode === 'undefined') {
-        showCameraError('Scanner library failed to load. Check your connection and try again.');
-        return;
-      }
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode('qr-reader');
-      }
-      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-      html5QrCode.start({ facingMode: 'environment' }, config, onScanSuccess, function () {
-        /* per-frame "no QR found" callback - intentionally silent */
-      }).catch(function (err) {
-        showCameraError(err && err.message ? err.message : 'Camera permission was denied or no camera is available.');
+    function loadConfig() {
+      if (!API_CONFIGURED) return;
+      fetch(API_URL + '?action=config')
+        .then(function (res) { return res.json(); })
+        .then(function (cfg) {
+          if (cfg && cfg.eventName) {
+            document.getElementById('eventName').textContent = cfg.eventName;
+            document.title = cfg.eventName + ' · Admin';
+          }
+        })
+        .catch(function () { /* non-fatal: keep the default heading */ });
+    }
+
+    function loadData() {
+      if (!API_CONFIGURED) return;
+      document.getElementById('refreshBtn').classList.add('spinning');
+      fetch(API_URL + '?action=dashboard')
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(onData)
+        .catch(onError);
+    }
+
+    function onData(data) {
+      document.getElementById('refreshBtn').classList.remove('spinning');
+      allAttendees = data.attendees || [];
+      updateStats(data.stats || {});
+      render();
+    }
+
+    function onError(err) {
+      document.getElementById('refreshBtn').classList.remove('spinning');
+      console.error('Dashboard load failed:', err);
+    }
+
+    function updateStats(stats) {
+      document.getElementById('statTotal').textContent = stats.total || 0;
+      document.getElementById('statRegistered').textContent = stats.registered || 0;
+      document.getElementById('statCheckedIn').textContent = stats.checkedIn || 0;
+      document.getElementById('statRemaining').textContent = stats.remaining || 0;
+      document.getElementById('statWaitlist').textContent = stats.waitlist || 0;
+      document.getElementById('statDuplicate').textContent = stats.duplicate || 0;
+
+      const pct = stats.attendancePct || 0;
+      document.getElementById('capacityPct').textContent = pct + '%';
+      const offset = GAUGE_CIRCUMFERENCE * (1 - pct / 100);
+      document.getElementById('gaugeCircle').style.strokeDashoffset = offset;
+
+      const filled = (stats.registered || 0) + (stats.checkedIn || 0);
+      document.getElementById('capacityFillText').textContent = filled + ' / ' + (stats.capacity || 0) + ' spots filled';
+    }
+
+    function render() {
+      const filtered = allAttendees.filter(function (a) {
+        const matchesFilter = currentFilter === 'ALL' || a.status === currentFilter;
+        const haystack = ((a.name || '') + ' ' + (a.email || '') + ' ' + (a.ticketId || '')).toLowerCase();
+        const matchesSearch = !currentSearch || haystack.indexOf(currentSearch) !== -1;
+        return matchesFilter && matchesSearch;
+      });
+
+      const body = document.getElementById('attendeeBody');
+      body.innerHTML = '';
+      document.getElementById('emptyState').hidden = filtered.length !== 0;
+
+      filtered.forEach(function (a) {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td'); tdName.textContent = a.name || '—'; tr.appendChild(tdName);
+        const tdEmail = document.createElement('td'); tdEmail.textContent = a.email || '—'; tr.appendChild(tdEmail);
+        const tdTicket = document.createElement('td'); tdTicket.textContent = a.ticketId || '—'; tdTicket.className = 'mono'; tr.appendChild(tdTicket);
+
+        const tdStatus = document.createElement('td');
+        const pill = document.createElement('span');
+        pill.className = 'status-pill status-' + statusClass(a.status);
+        pill.textContent = a.status || 'UNKNOWN';
+        tdStatus.appendChild(pill);
+        tr.appendChild(tdStatus);
+
+        const tdCheckIn = document.createElement('td'); tdCheckIn.textContent = a.checkInTime || '—'; tr.appendChild(tdCheckIn);
+
+        body.appendChild(tr);
       });
     }
 
-    function onScanSuccess(decodedText) {
-      processTicket(decodedText, true);
-    }
-
-    function toggleManual() {
-      const panel = document.getElementById('manualPanel');
-      panel.hidden = !panel.hidden;
-      if (!panel.hidden) document.getElementById('manualInput').focus();
-    }
-
-    function submitManual() {
-      const input = document.getElementById('manualInput');
-      const value = input.value.trim();
-      if (!value) return;
-      processTicket(value, false);
-      input.value = '';
-    }
-
-    function processTicket(ticketId, fromCamera) {
-      if (isBusy) return;
-      const now = Date.now();
-      if (ticketId === lastId && (now - lastTime) < COOLDOWN_MS) return;
-
-      isBusy = true;
-      lastId = ticketId;
-      lastTime = now;
-
-      showLoading(true);
-      if (html5QrCode && fromCamera) {
-        try { html5QrCode.pause(true); } catch (e) { /* no-op */ }
+    function statusClass(status) {
+      switch (status) {
+        case 'REGISTERED': return 'registered';
+        case 'CHECKED IN': return 'checkedin';
+        case 'WAITLIST': return 'waitlist';
+        case 'DUPLICATE': return 'duplicate';
+        default: return 'unknown';
       }
-
-      google.script.run
-        .withSuccessHandler(handleResult)
-        .withFailureHandler(handleFailure)
-        .verifyAndCheckIn(ticketId);
-    }
-
-    function handleResult(result) {
-      showLoading(false);
-      renderResult(result || { status: 'ERROR', message: 'No response from server.' });
-    }
-
-    function handleFailure(err) {
-      showLoading(false);
-      renderResult({ status: 'ERROR', message: 'Connection error. Please try again.' });
-    }
-
-    function renderResult(result) {
-      const overlay = document.getElementById('resultOverlay');
-      let state, title, meta;
-      const name = result.name || '';
-
-      switch (result.status) {
-        case 'VALID':
-          state = 'success';
-          title = 'Access Granted';
-          meta = 'Ticket ' + (result.ticketId || '') + ' · Checked in ' + (result.checkInTime || 'now');
-          break;
-        case 'ALREADY_USED':
-          state = 'warning';
-          title = 'Already Checked In';
-          meta = (result.checkInTime ? 'Previously checked in ' + result.checkInTime : 'Previously checked in');
-          break;
-        case 'DENIED':
-          if (result.reason === 'WAITLIST') {
-            state = 'warning';
-            title = 'On Waitlist';
-            meta = 'Not yet registered · Ticket ' + (result.ticketId || '');
-          } else if (result.reason === 'DUPLICATE') {
-            state = 'danger';
-            title = 'Duplicate Registration';
-            meta = 'Deny entry · Ticket ' + (result.ticketId || '');
-          } else {
-            state = 'danger';
-            title = 'Entry Denied';
-            meta = 'Status: ' + (result.reason || 'unknown');
-          }
-          break;
-        case 'INVALID':
-          state = 'danger';
-          title = 'Invalid Ticket';
-          meta = 'This QR code was not recognized';
-          break;
-        default:
-          state = 'neutral';
-          title = 'Something Went Wrong';
-          meta = result.message || 'Please try again';
-      }
-
-      overlay.dataset.state = state;
-      document.getElementById('resultIcon').innerHTML = ICONS[state];
-      document.getElementById('resultTitle').textContent = title;
-      document.getElementById('resultName').textContent = name;
-      document.getElementById('resultMeta').textContent = meta;
-      overlay.classList.add('visible');
-
-      clearTimeout(dismissTimer);
-      dismissTimer = setTimeout(dismissResult, RESULT_DISPLAY_MS);
-    }
-
-    function dismissResult() {
-      document.getElementById('resultOverlay').classList.remove('visible');
-      clearTimeout(dismissTimer);
-      isBusy = false;
-      if (html5QrCode) {
-        try { html5QrCode.resume(); } catch (e) { /* no-op */ }
-      }
-    }
-
-    function showLoading(show) {
-      document.getElementById('loadingOverlay').hidden = !show;
-    }
-
-    function showCameraError(message) {
-      document.getElementById('cameraError').hidden = false;
-      document.getElementById('cameraErrorDetail').textContent = message;
-    }
-
-    function hideCameraError() {
-      document.getElementById('cameraError').hidden = true;
     }
   </script>
 </body>
